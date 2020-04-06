@@ -1,0 +1,25 @@
+{
+  "name": "lyonbot.github.io",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vuepress dev",
+    "build": "vuepress build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lyonbot/lyonbot.github.io.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lyonbot/lyonbot.github.io/issues"
+  },
+  "homepage": "https://github.com/lyonbot/lyonbot.github.io#readme",
+  "devDependencies": {
+    "@vuepress/theme-blog": "^2.2.0",
+    "vuepress": "^1.4.0"
+  }
+}
