@@ -11,18 +11,46 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Setup NodeJS
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: 10
-      - run: npm i && npm run build
+          node-version: 16
+
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: latest
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Site
+        run: pnpm build
+
       - run: |
-          cd .vuepress/dist
+          cd dist
           touch .nojekyll
           git init
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
           git commit -am "Add changes"
+
       - name: Update ${{ env.DEPLOY_BRANCH }}
         uses: ad-m/github-push-action@master
         with:
