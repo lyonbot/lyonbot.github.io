@@ -61,7 +61,14 @@ export default {
 						},
 						code: {
 							border: "1px dotted #666",
+							padding: "2px 4px",
 							borderRadius: "2px",
+						},
+						"code::before": {
+							content: "",
+						},
+						"code::after": {
+							content: "",
 						},
 						blockquote: {
 							borderLeftWidth: "none",
