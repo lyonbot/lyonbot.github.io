@@ -30,8 +30,8 @@ export const siteConfig: SiteConfig = {
 	date: {
 		locale: "zh-CN",
 		options: {
-			day: "numeric",
-			month: "numeric",
+			day: "2-digit",
+			month: "2-digit",
 			year: "numeric",
 		},
 	},
