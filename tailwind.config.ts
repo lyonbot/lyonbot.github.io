@@ -56,6 +56,9 @@ export default {
 						a: {
 							"@apply cactus-link no-underline": "",
 						},
+						h2: {
+							marginTop: '4em',
+						},
 						strong: {
 							fontWeight: "700",
 						},

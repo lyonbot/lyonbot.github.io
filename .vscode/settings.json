@@ -9,6 +9,8 @@
 			"source.fixAll.markdownlint": true
 		}
 	},
+	"pasteImage.basePath": "${projectRoot}/public",
+	"pasteImage.path": "${projectRoot}/post-images",
 	"prettier.documentSelectors": ["**/*.astro"],
 	"eslint.validate": [
 		"javascript",

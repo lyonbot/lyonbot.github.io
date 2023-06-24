@@ -9,7 +9,9 @@ import prefetch from "@astrojs/prefetch";
 export default defineConfig({
 	// ! Please remember to replace the following site property with your own domain
 	site: "https://lyonbot.github.io/",
+	base: "/",
 	markdown: {
+		syntaxHighlight: "shiki",
 		shikiConfig: {
 			theme: "dracula",
 			wrap: true,

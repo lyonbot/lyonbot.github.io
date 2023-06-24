@@ -1,4 +1,4 @@
 {
-	"recommendations": ["astro-build.astro-vscode"],
+	"recommendations": ["astro-build.astro-vscode", "dendron.dendron-paste-image"],
 	"unwantedRecommendations": []
 }
