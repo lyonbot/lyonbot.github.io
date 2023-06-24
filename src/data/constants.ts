@@ -9,7 +9,7 @@ export const MENU_LINKS = [
 	},
 	{
 		title: "Blog",
-		path: "/posts/",
+		path: "/post/",
 	},
 ];
 

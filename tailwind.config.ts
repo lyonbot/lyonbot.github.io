@@ -59,6 +59,11 @@ export default {
 						h2: {
 							marginTop: '4em',
 						},
+						'.footnotes': {
+							marginTop: '4em',
+							paddingTop: '2em',
+							borderTop: '1px dashed currentColor'
+						},
 						strong: {
 							fontWeight: "700",
 						},

@@ -14,6 +14,9 @@ dependencies:
   astro:
     specifier: 2.7.0
     version: 2.7.0(sharp@0.32.1)
+  astro-rehype-relative-markdown-links:
+    specifier: ^0.4.4
+    version: 0.4.4(astro@2.7.0)
   satori:
     specifier: 0.10.1
     version: 0.10.1
@@ -23,6 +26,9 @@ dependencies:
   sharp:
     specifier: ^0.32.1
     version: 0.32.1
+  viewerjs:
+    specifier: ^1.11.3
+    version: 1.11.3
 
 devDependencies:
   '@astrojs/image':
@@ -1402,6 +1408,19 @@ packages:
   /astro-md-image-integration@0.0.0:
     resolution: {integrity: sha512-cQWYh7xf9wFARCOPkSzb82AYBHX9sr0kEXmkgUq/d9N8EjSRHhwmGRO8gr79FK7ZJE6LHF29/RUwqwLdX6vuFA==}
     dev: true
+
+  /astro-rehype-relative-markdown-links@0.4.4(astro@2.7.0):
+    resolution: {integrity: sha512-gPk/yeR45gnA9xoELf/6dZ/zzPx2fBTd2xuMoaSejvHNWJgbD9oUUXJfL1UoHZMwLvIRTL+8/MfXgi0SgAwiiw==}
+    peerDependencies:
+      astro: 2.x
+    dependencies:
+      astro: 2.7.0(sharp@0.32.1)
+      debug: 4.3.4
+      gray-matter: 4.0.3
+      unist-util-visit: 4.1.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /astro@2.7.0(sharp@0.32.1):
     resolution: {integrity: sha512-gUYx2R0V7fpZtFRN9f4nE0We95qYhJyAr+VW0nVFqlMMF1of9MzrjjJ+8rIGJ/6RooFK8XAaXWTQMGTok3ZzEA==}
@@ -5347,6 +5366,10 @@ packages:
       is-buffer: 2.0.5
       unist-util-stringify-position: 3.0.3
       vfile-message: 3.1.4
+
+  /viewerjs@1.11.3:
+    resolution: {integrity: sha512-efG3U61Umuj/1x6JAtdvnY9m407C/RkrkFilsMcLEWKDivpjNU3/FeL+feCY1Vkur9aQeBJ+z6K4CCPP7hv6vA==}
+    dev: false
 
   /vite@4.3.9:
     resolution: {integrity: sha512-qsTNZjO9NoJNW7KnOrgYwczm0WctJ8m/yqYAMAK9Lxt4SoySUfS5S8ia9K7JHpa3KEeMfyF8LoJ3c5NeBJy6pg==}
