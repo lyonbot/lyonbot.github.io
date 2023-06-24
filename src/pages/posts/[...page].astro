@@ -55,10 +55,10 @@ const paginationProps = {
 					))
 				}
 			</ul>
-			<Pagination {...paginationProps} />
+			<Pagination class="mt-8" {...paginationProps} />
 		</section>
 		{
-			uniqueTags.length && (
+			!!uniqueTags.length && (
 				<aside>
 					<h2 class="mb-4 flex items-center text-lg font-semibold">
 						<svg
@@ -83,7 +83,7 @@ const paginationProps = {
 						{uniqueTags.map((tag) => (
 							<li>
 								<a
-									class="flex items-center justify-center rounded-lg bg-accent p-1"
+									class="flex items-center justify-center rounded-lg bg-accent p-0.5 px-1.5"
 									href={`/tags/${tag}/`}
 									aria-label={`View all posts with the tag: ${tag}`}
 								>

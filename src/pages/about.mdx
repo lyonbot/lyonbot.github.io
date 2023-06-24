@@ -1,13 +1,11 @@
----
 import PageLayout from "@/layouts/Base";
 import { Image } from "@astrojs/image/components";
 import aboutImg from "../assets/about-astro.png";
 
-const meta = {
+export const meta = {
 	title: "About",
-	description: "I'm a starter theme for Astro.build",
+	description: "what is yon's site",
 };
----
 
 <PageLayout meta={meta}>
 	<div class="space-y-6">
@@ -33,17 +31,6 @@ const meta = {
 			<li>Shiki code syntax highlighting</li>
 			<li>Satori for auto generating OG images for blog posts</li>
 		</ul>
-		<p>
-			Clone or fork my
-			<a
-				class="cactus-link inline-block"
-				href="https://github.com/chrismwilliams/astro-cactus"
-				target="_blank"
-				rel="noopener noreferrer"
-				aria-label="github repository"
-			>
-				repo
-			</a> if you like me!
-		</p>
+		<p>Clone or fork my if you like me!</p>
 	</div>
 </PageLayout>
