@@ -258,6 +258,11 @@ import ctsdts2 from "../../assets/cts-dts.png";
 更多关于呈现顺序的事情，可以去搜索 PTS（呈现时间）、DTS（解码时间）这些信息，以及 mp4 标准里关于 ctts、dtts 等的定义。
 由于 [mp4box 已经有处理过](https://github.com/gpac/mp4box.js/blob/master/src/isofile-sample-processing.js)，所以我们可以用 `sample.cts / sample.timescale` 直接获得时间戳。
 
+幸运的是，W3C 标准已经要求 VideoDecoder 的 output	回调，按照画面帧的呈现顺序依次调用（[标准文档](https://www.w3.org/TR/webcodecs/#dom-videodecoder-decode)）。
+这帮我们省了很多事情，直接一帧帧地使用就行了。
+
+> （翻译自W3C）VideoDecoder 标准要求输出画面帧地时候，按照呈现顺序输出。因此在对接一些编解码器同时，用户代理（也就是浏览器）还需要额外对数据做排序，以符合呈现顺序。
+
 ### 解决手机录像，画面颠倒的问题
 
 虽然对电脑录屏等场景，视频轨道的 width、height 等同于视频的宽高。但是，在手机录像等场景中，有可能视频的 width 其实对应的是画面高度，而且还上下颠倒了。
