@@ -5,6 +5,8 @@ import image from "@astrojs/image";
 import sitemap from "@astrojs/sitemap";
 import prefetch from "@astrojs/prefetch";
 import rehypeAstroRelativeMarkdownLinks from "astro-rehype-relative-markdown-links";
+import remarkMath from "remark-math"
+import rehypeMathjax from "rehype-mathjax"
 
 // https://astro.build/config
 export default defineConfig({
@@ -17,7 +19,13 @@ export default defineConfig({
 			theme: "dracula",
 			wrap: true,
 		},
-		rehypePlugins: [rehypeAstroRelativeMarkdownLinks],
+		remarkPlugins: [
+			remarkMath,
+		],
+		rehypePlugins: [
+			rehypeMathjax,
+			rehypeAstroRelativeMarkdownLinks,
+		],
 	},
 	integrations: [
 		mdx({}),

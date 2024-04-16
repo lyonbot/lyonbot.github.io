@@ -1,0 +1,356 @@
+---
+title: 使用 WebCodec 解码视频、抓帧截图、转GIF
+description: 比ffmpeg.wasm速度快太多了。用来做视频转GIF的工具简直飞起。
+publishDate: 2024/Apr/16
+tags: [多媒体, 前端技术]
+---
+
+> 在浏览器内将视频转GIF，无需上传，速度飞快
+>
+> ✨ 已上线 https://lyonbot.github.io/video-to-gif/
+
+## 使用 ffmpeg 生成高质量GIF，全是技巧和折磨
+
+上周五写一个材料的时候，需要插入几个 GIF 演示动图。一开始我熟练的打开终端，使用了我这段祖传 ffmpeg 生成高质量 GIF 的命令：
+
+```sh
+ffmpeg -i scr1.mov -vf "fps=10,scale=320:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=255[p];[s1][p]paletteuse" -loop 0 output.gif
+```
+
+但是转换过程不太顺利，因为输出的 GIF 文件太大了，我不得不去精细地调整参数，把各种骚操作都尝试一遍，包括但不限于：
+
+- 剪辑视频：在 `-i` 前插入想要的时间范围 `-ss 00:00:00 -to 00:00:05`
+- 调整分辨率：`scale=320:-1` 表示宽度 320，高度自动
+- 加速视频：`setpts=PTS/2` 两倍速
+- 调整颜色数量：酌情降低 `max_colors=255`
+- 去掉 GIF Dither：屏幕录像一般不需要颜色抖动，可以在 `paletteuse` 后面加参数 `dither=none`
+- 分两步骤生成：先对原视频剪辑、加速、缩放，生成临时的视频文件后，再走 GIF 转换逻辑。这样 ffmpeg 会快很多。
+- and more
+
+技巧很多，但是操作起来要来回在终端、文件管理器之间切换。虽然看起来很 Geek，但是真的浪费时间。
+
+## 做成在线工具
+
+其实很早之前就想把 ffmpeg 的指令生成过程，做成在线工具，并且可以在浏览器运行。一方面，可视化配置参数很舒服；一方面省了安装 ffmpeg 和复制路径的麻烦事。
+
+但是对生成 GIF 这件事而言，知道那么多魔法咒语，好像没啥用，还显得非常 nerd。
+
+所以上周五，我决定单独把 **视频转GIF** 这件事情，直接做到网页中，并且将那些精细的调整功能、观察文件大小的功能，都。
+
+于是就有了这个 [🔨 video-to-gif 的小工具](https://lyonbot.github.io/video-to-gif/)
+
+import videoToGif from "../../assets/video-to-gif.mp4";
+
+<video src={videoToGif} loop="-1" muted autoplay class="max-w-full mx-auto block"></video>
+
+
+但是方案落地也走了挺多弯路。
+
+GIF 的生成包括解码原视频、生成色板、编码为GIF三部分。
+
+一开始是直接让 [ffmpeg.wasm](https://ffmpegwasm.netlify.app/) 一步到位解码视频+编码 GIF ，奈何 wasm 解码速度太差。后来改成 video 抓画面，再到改成 WebCodec 超高速解码。然而解码也分很多步骤：解析 mp4 文件、配置解码器、抽取要解码的数据块、进行解码、根据坐标变换修正图片。
+
+而 GIF 编码这部分，虽然 ffmpeg.wasm 已经很快，但是其加载出错的时候还得有 JS 兜底方案。一开始用的 [gif.js](https://github.com/jnordberg/gif.js) ，因为其未暴露颜色数量控制能力，改成了 [modern-gif]( https://github.com/qq15725/modern-gif)
+
+## 使用 WebCodec 解码视频、抓帧
+
+WebCodec 是一个很新的浏览器 API（Chrome >94，2021年9月的版本；Safari 16.4，2023年3月版本）。
+它允许开发者直接解码视频帧，而不需要依赖任何外部库。并且还能得到系统级的加速，减少对浏览器内存的占用。
+
+但是使用这个东西，并不是直接把 mp4 文件丢进去就可以了。完整的过程包括：解析 mp4 文件、配置解码器、抽取要解码的数据块、进行解码、根据坐标变换修正图片。
+
+实现的过程我参考了这些项目：
+
+- https://github.com/w3c/webcodecs/tree/main/samples
+- https://github.com/vjeux/mp4-h264-re-encode
+
+并且还有使用 [mp4box.js 的 FileReader 工具](https://gpac.github.io/mp4box.js/test/filereader.html) 来分析文件。
+
+### 使用 mp4box.js 加载文件
+
+视频文件 mp4/mov 只是一个“容器”，它存储了视频、音轨、文件描述等信息。我们首先需要的是将里面的“解码器参数”和“视频数据”抽取出来。
+
+安装 [mp4box.js](https://github.com/gpac/mp4box.js) 库： `pnpm install mp4box`
+
+然后使用下面代码，可以解析文件
+
+```js
+import MP4Box from 'mp4box'
+
+// 此处 file 是一个 Blob 对象
+async function decodeMp4File(file) {
+  const mp4boxInputFile = MP4Box.createFile();
+
+  // 方便后面用 await 等待
+  const mp4InfoPromise = new Promise((resolve, reject) => {
+    mp4boxInputFile.onReady = resolve
+    mp4boxInputFile.onError = reject
+  })
+
+  // 读取文件并解析
+  const buffer = await file.arrayBuffer()
+  buffer.fileStart = 0  // 这个很重要，mp4box.js 需要知道每一个 Buffer 相对原始文件的位置（因为它可以跳着解析 mp4）
+  mp4boxInputFile.appendBuffer(buffer)
+
+  // 等待 mp4box 获取文件信息
+  const info = await mp4InfoPromise;
+  const track = info.videoTracks[0];
+  let description; // 视频解码器的配置参数，是 Uint8Array
+  {
+    const DataStream = MP4Box.DataStream; // mp4box.js 内置了一个魔改版的 DataStream 包
+    const trak = mp4boxInputFile.getTrackById(track.id);
+    for (const entry of trak.mdia.minf.stbl.stsd.entries) {    // 跟着 MPEG 标准走就对了，信息是藏在这个 mp4 box（数据盒子）里
+      if (entry.avcC || entry.hvcC) {  // hvc 是 H.265 格式的文件； avc 是 H.264 的
+        const stream = new DataStream(undefined, 0, DataStream.BIG_ENDIAN);
+        if (entry.avcC) entry.avcC.write(stream);
+        else entry.hvcC.write(stream);
+
+        description = new Uint8Array(stream.buffer, 8); // 去掉前8字节，也就是 mp4 的 box 的头
+        break;
+      }
+    }
+
+    if (!description) throw new Error('no video description')
+  }
+}
+```
+
+### 初始化解码器
+
+以上我们得到了这个 MP4 文件的编码参数，接下来就可以请出 [VideoDecoder](https://developer.mozilla.org/en-US/docs/Web/API/VideoDecoder) 解码器来获取画面了。
+
+和视频回放不同，解码器会以最快的速度，将画面帧 [VideoFrame 对象](https://developer.mozilla.org/en-US/docs/Web/API/VideoFrame) 一个个的取出来给你。你要做的就是在一个回调函数里处理它，并且得及时 `.close()` 释放画面帧的资源。
+
+初始化解码器，需要这些信息：
+
+- `output` 回调函数，告知如何处理解码得到的画面
+- `error` 出错时候的回调函数
+- 从 mp4 里解析得到的解码器信息（尤其那个 `description` 很重要）
+
+```js
+const decoder = new VideoDecoder({
+  output(inputFrame) {
+    // 此处就是回调函数，需要及时处理 VideoFrame 对象
+
+    // 你还可以知道这一帧的时间戳、持续时间
+    const timestamp = inputFrame.timestamp / 1e6  // 单位是微秒，我们换算成秒
+    const duration = inputFrame.duration / 1e6  // 单位是微秒，我们换算成秒
+
+    // 比如我会准备一个临时的 canvas，将画面绘制下来，然后释放画面帧的资源
+    // 备注： VideoFrame 是可以安全传送给 Worker 处理的，这部分逻辑其实可以挪到 WebWorker 里
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.drawImage(inputFrame, 0, 0)
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    // TODO: 处理 data
+
+    // 画面帧使用完记得释放资源！（如果是 Worker 里处理，则在 worker 调用）
+    inputFrame.close();
+  },
+  error(error) {
+    // 处理错误情况
+  },
+});
+
+// 使用前面解析的信息，初始化解码器
+decoder.configure({
+  codec: track.codec,
+  codedWidth: track.track_width,
+  codedHeight: track.track_height,
+  description,
+  hardwareAcceleration: 'prefer-hardware',
+});
+```
+
+### 抽取视频流，解码画面
+
+视频画面数据，是由一大串的数据包构成的。具体的拆包方式、码流格式等标准很复杂，要去理解就太麻烦了。
+幸运的是， mp4box.js 已经提供了实用的方法，帮你找出那些数据包，你要做的就是，将数据包转发给 decoder 去解码画面。
+
+我们只需要配置一个回调函数，然后让 mp4box 开始监测视频轨道的数据，一旦解析到数据包就触发回调，去解码画面。
+
+```js
+mp4boxInputFile.onSamples = (track_id, unused, samples) => {
+  let i = 0
+
+  // samples 就是那些数据包
+  for (; i < samples.length; i++) {
+    const sample = samples[i]
+    const timestamp = sample.cts / sample.timescale // 单位是秒
+
+    // 将数据包转发给 decoder 去解码
+    decoder.decode(new EncodedVideoChunk({
+      type: sample.is_sync ? "key" : "delta", // 类似关键帧的概念...
+      timestamp: timestamp * 1e6, // 单位换算
+      duration: sample.duration * 1e6 / sample.timescale,
+      data: sample.data,
+    }))
+
+    // 等待解码完全结束，也就是所有的画面都解码完成了，然后就可以关闭 decoder 了
+    await decoder.flush();
+    decoder.close();
+  }
+}
+
+// 配置 mp4box 自动拆解视频轨道的数据包，然后开始处理文件。
+mp4boxInputFile.setExtractionOptions(track.id, null, { nbSamples: Infinity });
+mp4boxInputFile.start();
+```
+
+onSamples 这个回调会在 mp4box.js 拆解完文件后调用。具体数据包的格式可以参考 [他们的文档](https://github.com/gpac/mp4box.js?tab=readme-ov-file#onsamplesid-user-samples)。
+里面有一个 `unused` 参数，没啥用，等同于 `setExtractionOptions` 时候传入的第二个参数，也就是 null。
+
+### 跳过前后，只解码一个时间范围
+
+有时候我们只需要某一些时间范围的画面，不需要解码整个文件。此时可以考虑跳过部分 sample。
+
+值得一提的是，虽然 mp4box 文件对象提供了 `seek(time, useRap=false)` 的方法，但是在我们这个场景下没有用。
+它返回的是你需要额外下载的文件数据，从哪里开始。如果你在做按需分块加载视频的功能，那么可能有点用（还记得一开始那个 `buffer.fileStart` 和 `appendBuffer` 么？）。然而我们这个场景下，可以读取到 **整个文件**，因此没有追加加载文件数据的情况。
+
+由于我们是整个文件、整个视频轨的解码，因此 `onSamples` 能够拿到所有视频数据包。所以我们只能在回调里，根据规则跳过一些 samples。
+
+前面代码的循环中，我们读取到了数据包的画面时间戳 `timestamp`，因此可以在利用 `break` 语句，跳过结束时间之后的画面解码。
+
+但是，跳过开始时间之前的画面，还额外有一些技巧。以下是我使用的代码：
+
+```js
+// start 就是我们要截取的开始时间（秒）
+const start = 2.1;
+
+while (i < samples.length && ((samples[i].cts + samples[i].duration) / samples[i].timescale < start)) i++;
+while (i > 0 && !samples[i].is_sync) i--;
+```
+
+正如我们在播放器里拖动进度条，不一定能完美跳到那个时间点一样。为了压缩数据，一个视频帧画面，可能依赖了前面N帧的画面，因此要解码这一帧，我们得从它依赖的最前面的帧开始解码。
+
+上面代码在找到当前时刻的数据包后，还回溯找到最近的关键帧，作为解码的起点。通过 `is_sync` 可以确定是否是关键帧，我们从那里开始解码就行了。
+
+但是这就结束了么？
+
+说到这里，还得补充一个细节，就是 **数据包不一定是按照画面呈现先后排列的！** 比如坂本同学反复横跳，对视频压缩算法而言，它可能会倾向于把相似的画面放在一起压缩 —— 只需要播放给你时调整画面顺序就OK了。
+
+import ctsdts1 from "../../assets/cts-dts.gif";
+import ctsdts2 from "../../assets/cts-dts.png";
+
+<figure>
+  <div class="flex">
+    <img src={ctsdts1.src} class="mr-2" />
+    <img src={ctsdts2.src} class="min-w-0 flex-1" />
+  </div>
+  <figcaption>
+  第一行为呈现顺序，第二行为画面解码顺序（相似的画面放一起，压缩率更高）
+  </figcaption>
+</figure>
+
+考虑到 mp4box 应该是按照解码顺序来切割的，因此我们用 `break` 语句提前结束解码，可能导致一些画面的丢失。一个调整方式大概是
+
+1. 在 `for` 循环之前准备一个标识变量
+   ```js
+   let waitingForEndKeyFrame = false;
+   ```
+
+2. 在 `decode` 方法之后，补充检查这个标志，解码最后一个必须的关键帧之后再退出循环：
+
+   ```js
+   if (timestamp > end) waitingForEndKeyFrame = true;
+   if (waitingForEndKeyFrame && sample.is_sync) break;
+   ```
+
+更多关于呈现顺序的事情，可以去搜索 PTS（呈现时间）、DTS（解码时间）这些信息，以及 mp4 标准里关于 ctts、dtts 等的定义。
+由于 [mp4box 已经有处理过](https://github.com/gpac/mp4box.js/blob/master/src/isofile-sample-processing.js)，所以我们可以用 `sample.cts / sample.timescale` 直接获得时间戳。
+
+### 解决手机录像，画面颠倒的问题
+
+虽然对电脑录屏等场景，视频轨道的 width、height 等同于视频的宽高。但是，在手机录像等场景中，有可能视频的 width 其实对应的是画面高度，而且还上下颠倒了。
+
+在视频轨道信息 `track` 里，有一个 `matrix` 字段，它存储的是一个 [仿射变换的变换矩阵](https://zh.wikipedia.org/wiki/%E5%8F%98%E6%8D%A2%E7%9F%A9%E9%98%B5)（的前6个参数）。
+将解码结果画到画布时，你得根据这个矩阵做个变换，才能看到正确的画面。
+
+在 HTML Canvas Context 中，有一个 `setTransform(matrix)` 的方法，可以在绘制画面之前调用，从而将原始坐标 $(x,y)$ 变换到正确的坐标 $(x', y')$ 上绘制。
+
+$
+\begin{bmatrix}x' \\ y' \\ 1\end{bmatrix} =
+\begin{bmatrix}a & c & e \\ b & d & f \\ 0 & 0 & 1 \end{bmatrix}
+\begin{bmatrix}x \\ y \\ 1\end{bmatrix}
+$
+
+然而 `track.matrix` 存储的是32位定点数（也就是要除以65536才是真实的值），而且其存储顺序和 HTML Canvas 的矩阵参数顺序不一样。它存储的顺序是 `[a, c, e, b, d, f]`。
+
+因此回到最开始解析 `description` 的地方，我们像这样可以计算 **Canvas 绘图时使用的** 变换矩阵：
+
+```js
+let transform: DOMMatrix
+
+const [a, c, e, b, d, f] = Array.from(track.matrix.slice(0, 6), (x: number) => x / 65536) // Fixed-float number
+const matrix = new DOMMatrix([a, b, c, d, e, f])
+
+// 使用矩阵乘法，计算真正呈现的画面宽高（不太严谨，但是够用）
+const videoWidth = Math.abs(a * track.track_width + c * track.track_height)
+const videoHeight = Math.abs(b * track.track_width + d * track.track_height)
+// 备注：你可以看情况用到 canvas 上
+// canvas.width = videoWidth
+// canvas.height = videoHeight
+
+// 为 Canvas 计算变换矩阵
+// 注意：这里变换过程要倒着读，详情参考矩阵的乘法的顺序
+transform = new DOMMatrix()
+  .translate(resizeWidth / 2, resizeHeight / 2)                   // 4. 从原点移动回去整个画布上
+  .scale(canvas.width / videoWidth, canvas.height / videoHeight)  // 3. 此时画面已经摆正，按照 canvas 的需要缩放画面
+  .multiply(matrix.inverse())                                     // 2. 按照 matrix 旋转画面（求逆的必要性懒得查标准了）
+  .translate(-track.track_width / 2, -track.track_height / 2)     // 1. 将画面平移到原点中央
+```
+
+以及在绘制画面帧的时候，像这样处理：
+
+```js
+ctx.resetTransform()
+ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+ctx.setTransform(transform)
+ctx.drawImage(inputFrame, 0, 0)
+```
+
+这样子，就可以解决手机拍摄的视频可能发生旋转的问题了。
+
+我猜测可能是手机为了减少画面数据处理的繁琐性，选择了直接将传感器的数据送给视频编码器，然后再通过 MP4 的 matrix 让播放器负责变换画面。
+只能说 mp4 是一个神奇的格式。前面提到的 ctts 之类的东西，还能用于手机的慢动作视频变速播放（很多手机调整变速范围时，不需要重新编码，就是靠 mp4 的这些神奇功能实现的）。
+虽然很灵活，但也苦了播放器的开发者了。
+
+## 最后
+
+说到这里，复杂的工作就算是结束了。有了 WebCodec 极速解码画面，结合一开始祖传的 ffmpeg 指令，就能快速转换视频为高质量 GIF 了。具体的说，就是将画面原始 RGBA 二进制数据导入到 ffmpeg，让它用特定参数去识别，就可以用了：
+
+```sh
+ffmpeg \
+	-f rawvideo -pix_fmt rgba \
+	-video_size ${canvas.width}x${canvas.height} \
+	-framerate ${自己看着办} \
+	-i temp.bin \
+	# 。。。此处加祖传参数
+```
+
+实测发现 wasm 做 GIF 的调色板生成、编码压缩，速度是比 JavaScript 的库更快的。而且还能用 ffmpeg 的各种神秘小参数。
+
+<br />
+
+以防万一没看到前面链接，这里再贴一次：
+
+- 在线体验： https://lyonbot.github.io/video-to-gif/
+- 代码（欢迎 Star）： https://github.com/lyonbot/video-to-gif
+
+<video src={videoToGif} loop="-1" muted autoplay class="max-w-full mx-auto block"></video>
+
+### 最最后，碎碎念一段 Signal
+
+这次使用的是 SolidJS、UnoCSS、Vite 的方案，开发体验还是很不错的。
+
+曾经还想写一篇文章聊聊 SolidJS Signal 的概念多牛皮，但是正逢上 Vue 党狂吹 Signal 的那段时间，外加自己比较懒（重点），所以就鸽了。
+
+我感觉Signal的重点，不是响应式、Proxy之类实现方式的问题（s.js 和 SolidJS 通过 Accessor 函数来读写变量虽然丑，但也不是致命点），而是「计算作用域」的概念。
+基于「计算可以嵌套」的特性，把一个UI组件/类实例…视为一个域，然后里面的属性/子元素，又划分为更细粒度的子域，从而实现真·超细粒度响应式更新。
+
+配合趁手的写法（无论是 Vue 的模版语言编译器，还是 [SolidJS 魔改的 JSX](https://www.npmjs.com/package/babel-plugin-jsx-dom-expressions)，还是 createEffect 嵌套 createEffect 的写法……都可以），
+让子计算的创建足够简单容易，就能体会到 Signal 这种范式有多么潇洒。
+
+也许很适合低代码？（emmm，虽然我们团队的低代码项目走向已逐渐离谱，想那么多已经没落地的机会了）（又是一个之前想写但是鸽了的东西）
+
+再说吧，咱最近主打的就是一个 P人属性大爆发。

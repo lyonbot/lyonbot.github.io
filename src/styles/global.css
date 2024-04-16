@@ -30,6 +30,16 @@
 	html body {
 		@apply mx-auto flex h-full max-w-5xl flex-col bg-bgColor px-8 pt-16 font-mono text-sm font-normal text-textColor antialiased;
 	}
+
+	mjx-container {
+		display: inline-block;
+		vertical-align: middle;
+	}
+
+	p > mjx-container:only-child {
+    display: flex;
+    justify-content: center;
+	}
 }
 
 @tailwind components;
