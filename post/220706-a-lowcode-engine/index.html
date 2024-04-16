@@ -1,0 +1,183 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no"><meta http-equiv="X-UA-Compatible" content="IE=edge"><!-- Icons / Favicon --><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/manifest.webmanifest"><link rel="canonical" href="https://lyonbot.github.io/post/220706-a-lowcode-engine/"><!-- Primary Meta Tags --><title>兼顾布局、数据、逻辑的低代码引擎，应该怎么做 • yon&#39;s</title><meta name="title" content="兼顾布局、数据、逻辑的低代码引擎，应该怎么做 • yon's"><meta name="description" content="总有人以为做个拖拉拽就是低代码！没有充足的考虑就开始弄，最后只能得到一个场景有限的玩具。"><meta name="author" content="lyonbot"><!-- Theme Colour --><meta name="theme-color" content="#fafafa"><!-- Open Graph / Facebook --><meta property="og:type" content="article"><meta property="og:title" content="兼顾布局、数据、逻辑的低代码引擎，应该怎么做"><meta property="og:description" content="总有人以为做个拖拉拽就是低代码！没有充足的考虑就开始弄，最后只能得到一个场景有限的玩具。"><meta property="og:url" content="https://lyonbot.github.io/post/220706-a-lowcode-engine/"><meta property="og:site_name" content="yon's"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="https://lyonbot.github.io/og-image/220706-a-lowcode-engine.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="article:author" content="lyonbot"><meta property="article:published_time" content="2022-07-06T00:00:00.000Z"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://lyonbot.github.io/post/220706-a-lowcode-engine/"><meta property="twitter:title" content="兼顾布局、数据、逻辑的低代码引擎，应该怎么做"><meta property="twitter:description" content="总有人以为做个拖拉拽就是低代码！没有充足的考虑就开始弄，最后只能得到一个场景有限的玩具。"><meta property="twitter:image" content="https://lyonbot.github.io/og-image/220706-a-lowcode-engine.png"><!-- RSS auto-discovery --><link rel="alternate" type="application/rss+xml" title="yon's" href="/rss.xml"><script>(function(){const siteConfig = {"author":"lyonbot","title":"yon's","description":"I might express","lang":"zh-CN","ogLocale":"zh_CN","themeColorLight":"#fafafa","themeColorDark":"#1d1f21","date":{"locale":"zh-CN","options":{"day":"2-digit","month":"2-digit","year":"numeric"}}};
+
+			const root = document.documentElement;
+			const colorThemeMetaTag = document.querySelector("meta[name='theme-color']");
+
+			// get user preference of dark mode, 1st local storage, 2nd browser
+			function getThemePreference() {
+				if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
+					return localStorage.getItem("theme");
+				}
+				return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+			}
+
+			const isDark = getThemePreference() === "dark";
+
+			// watch document element class attribute and update user preference when it changes.
+			const observer = new MutationObserver(() => {
+				const rootIsDark = root.classList.contains("dark");
+				// set the meta attribute
+				colorThemeMetaTag.setAttribute(
+					"content",
+					siteConfig[rootIsDark ? "themeColorDark" : "themeColorLight"]
+				);
+				// store user preference
+				if (typeof localStorage !== "undefined") {
+					localStorage.setItem("theme", rootIsDark ? "dark" : "light");
+				}
+			});
+			observer.observe(root, { attributeFilter: ["class"] });
+
+			// initailse root class attribute
+			root.classList.toggle("dark", isDark);
+		})();</script><link rel="stylesheet" href="/_astro/hoisted.0af36014.css" />
+<link rel="stylesheet" href="/_astro/404.cc902ad1.css" />
+<link rel="stylesheet" href="/_astro/_slug_.bb34e5f3.css" /><script type="module" src="/_astro/hoisted.1c0b157d.js"></script>
+<script type="module" src="/_astro/page.756ffed2.js"></script></head><body><a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:start-1 focus:top-1.5">skip to content
+</a><header id="main-header" class="group relative mb-28 flex items-center sm:ps-[4.5rem]"><div class="flex sm:flex-col"><a href="/" class="inline-flex items-center grayscale hover:filter-none sm:relative sm:inline-block"><svg class="me-3 h-10 w-6 sm:absolute sm:start-[-4.5rem] sm:me-0 sm:h-20 sm:w-12" aria-hidden="true" focusable="false" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 272 480"><title>Logo</title><path d="M181.334 93.333v-40L226.667 80v40l-45.333-26.667ZM136.001 53.333 90.667 26.667v426.666L136.001 480V53.333Z" fill="#B04304"></path><path d="m136.001 119.944 45.333-26.667 45.333 26.667-45.333 26.667-45.333-26.667ZM90.667 26.667 136.001 0l45.333 26.667-45.333 26.666-45.334-26.666ZM181.334 53.277l45.333-26.666L272 53.277l-45.333 26.667-45.333-26.667ZM0 213.277l45.333-26.667 45.334 26.667-45.334 26.667L0 213.277ZM136 239.944l-45.333-26.667v53.333L136 239.944Z" fill="#FF5D01"></path><path d="m136 53.333 45.333-26.666v120L226.667 120V80L272 53.333V160l-90.667 53.333v240L136 480V306.667L45.334 360V240l45.333-26.667v53.334L136 240V53.333Z" fill="#53C68C"></path><path d="M45.334 240 0 213.334v120L45.334 360V240Z" fill="#B04304"></path></svg><span class="text-xl font-bold sm:text-2xl">yon&#39;s</span></a><nav id="navigation-menu" class="absolute -inset-x-4 top-14 hidden flex-col items-end gap-y-4 rounded-md bg-[--theme-menu-bg] py-4 text-accent shadow backdrop-blur group-[.menu-open]:z-50 group-[.menu-open]:flex sm:static sm:z-auto sm:-ms-4 sm:mt-1 sm:flex sm:flex-row sm:items-center sm:divide-x sm:divide-dashed sm:divide-accent sm:rounded-none sm:bg-transparent sm:py-0 sm:shadow-none sm:backdrop-blur-none" aria-label="Main menu"><a href="/" class="px-4 py-4 sm:py-0 sm:hover:underline" rel="prefetch">Home</a><a href="/about/" class="px-4 py-4 sm:py-0 sm:hover:underline" rel="prefetch">About</a><a href="/post/" class="px-4 py-4 sm:py-0 sm:hover:underline" rel="prefetch">Blog</a></nav></div><theme-toggle class="ms-auto"><button type="button" id="toggle-theme" class="group relative h-9 w-9 rounded-md bg-zinc-200 p-2 ring-zinc-400 transition-all hover:ring-2 dark:bg-zinc-700" aria-label="Toggle Dark Mode"><svg id="sun-svg" class="absolute start-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 transition-all group-aria-pressed:scale-100 group-aria-pressed:opacity-100" aria-hidden="true" focusable="false" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M22 12L23 12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 2V1" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 23V22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M20 20L19 19" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M20 4L19 5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4 20L5 19" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4 4L5 5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M1 12L2 12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg><svg id="moon-svg" class="absolute start-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 transition-all group-aria-[pressed=false]:scale-100 group-aria-[pressed=false]:opacity-100" aria-hidden="true" focusable="false" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"></circle><path d="M7.63262 3.06689C8.98567 3.35733 9.99999 4.56025 9.99999 6.00007C9.99999 7.65693 8.65685 9.00007 6.99999 9.00007C5.4512 9.00007 4.17653 7.82641 4.01685 6.31997" stroke="currentColor" stroke-width="1.5"></path><path d="M22 13.0505C21.3647 12.4022 20.4793 12 19.5 12C17.567 12 16 13.567 16 15.5C16 17.2632 17.3039 18.7219 19 18.9646" stroke="currentColor" stroke-width="1.5"></path><path d="M14.5 8.51L14.51 8.49889" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 17C11.1046 17 12 16.1046 12 15C12 13.8954 11.1046 13 10 13C8.89543 13 8 13.8954 8 15C8 16.1046 8.89543 17 10 17Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg></button></theme-toggle><button id="toggle-navigation-menu" class="group relative ms-8 h-7 w-7 sm:invisible sm:hidden" type="button" aria-label="Open main menu" aria-expanded="false" aria-haspopup="menu"><svg id="line-svg" class="absolute start-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 transition-all group-aria-expanded:scale-0 group-aria-expanded:opacity-0" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5"></path></svg><svg id="cross-svg" class="absolute start-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 scale-0 text-accent opacity-0 transition-all group-aria-expanded:scale-100 group-aria-expanded:opacity-100" class="text-accent" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button></header><main id="main" class="flex-1"><div class="gap-x-10 lg:flex lg:items-start"><aside class="sticky top-20 order-2 -me-32 hidden basis-64 lg:block"><div id="aside-container"></div><h2 class="font-semibold">Table of Contents</h2><ul class="mt-4 text-xs"><li class="line-clamp-2 hover:text-accent"><a class="block mt-2 text-xs" style="padding-left: 0ex" href="#-序言" data-prose-heading-id="-序言" aria-label="Scroll to section: 🚪 序言">🚪 序言</a></li><li class="line-clamp-2 hover:text-accent"><a class="block mt-2 text-xs" style="padding-left: 0ex" href="#-低代码简化了搭建但不会简化需求" data-prose-heading-id="-低代码简化了搭建但不会简化需求" aria-label="Scroll to section: 🔭 低代码简化了搭建，但不会简化需求">🔭 低代码简化了搭建，但不会简化需求</a></li><li class="line-clamp-2 hover:text-accent"><a class="block mt-2 text-xs" style="padding-left: 0ex" href="#-又一个拖拉拽的轮子" data-prose-heading-id="-又一个拖拉拽的轮子" aria-label="Scroll to section: 🙄 又一个“拖拉拽”的轮子？">🙄 又一个“拖拉拽”的轮子？</a></li><li class="line-clamp-2 hover:text-accent"><a class="block mt-2 text-xs" style="padding-left: 0ex" href="#️-从领域层面规划出一个引擎" data-prose-heading-id="️-从领域层面规划出一个引擎" aria-label="Scroll to section: ✍️ 从领域层面，规划出一个引擎">✍️ 从领域层面，规划出一个引擎</a></li><li class="line-clamp-2 hover:text-accent"><a class="block mt-2 text-xs" style="padding-left: 0ex" href="#-模型驱动" data-prose-heading-id="-模型驱动" aria-label="Scroll to section: 💪 模型驱动">💪 模型驱动</a></li><li class="line-clamp-2 hover:text-accent"><a class="block mt-2 text-xs" style="padding-left: 0ex" href="#-数据源" data-prose-heading-id="-数据源" aria-label="Scroll to section: 📦 数据源">📦 数据源</a></li><li class="line-clamp-2 hover:text-accent"><a class="block mt-2 text-xs" style="padding-left: 0ex" href="#-嵌套--作用域让低代码能解决更多问题" data-prose-heading-id="-嵌套--作用域让低代码能解决更多问题" aria-label="Scroll to section: 🎎 嵌套 &#38; 作用域：让低代码能解决更多问题">🎎 嵌套 &amp; 作用域：让低代码能解决更多问题</a></li><li class="line-clamp-2 hover:text-accent"><a class="block mt-2 text-xs" style="padding-left: 2ex" href="#以待办清单页为例" data-prose-heading-id="以待办清单页为例" aria-label="Scroll to section: 以「待办清单」页为例">以「待办清单」页为例</a></li><li class="line-clamp-2 hover:text-accent"><a class="block mt-2 text-xs" style="padding-left: 2ex" href="#编辑时交互" data-prose-heading-id="编辑时交互" aria-label="Scroll to section: 编辑时交互">编辑时交互</a></li><li class="line-clamp-2 hover:text-accent"><a class="block mt-2 text-xs" style="padding-left: 2ex" href="#用户要理解作用域是不是很麻烦" data-prose-heading-id="用户要理解作用域是不是很麻烦" aria-label="Scroll to section: 用户要理解“作用域”，是不是很麻烦？">用户要理解“作用域”，是不是很麻烦？</a></li><li class="line-clamp-2 hover:text-accent"><a class="block mt-2 text-xs" style="padding-left: 0ex" href="#-扩展能力--想象空间" data-prose-heading-id="-扩展能力--想象空间" aria-label="Scroll to section: 🧩 扩展能力 &#38; 想象空间">🧩 扩展能力 &amp; 想象空间</a></li><li class="line-clamp-2 hover:text-accent"><a class="block mt-2 text-xs" style="padding-left: 2ex" href="#以组件库为例" data-prose-heading-id="以组件库为例" aria-label="Scroll to section: 以组件库为例">以组件库为例</a></li><li class="line-clamp-2 hover:text-accent"><a class="block mt-2 text-xs" style="padding-left: 2ex" href="#以业务逻辑为例" data-prose-heading-id="以业务逻辑为例" aria-label="Scroll to section: 以业务逻辑为例">以业务逻辑为例</a></li><li class="line-clamp-2 hover:text-accent"><a class="block mt-2 text-xs" style="padding-left: 0ex" href="#-有谁在用呢" data-prose-heading-id="-有谁在用呢" aria-label="Scroll to section: 👯 有谁在用呢">👯 有谁在用呢</a></li></ul></aside><article class="flex-grow break-words"><div id="blog-hero"><h1 class="title mb-3 sm:mb-1">兼顾布局、数据、逻辑的低代码引擎，应该怎么做</h1><time datetime="2022-07-06T00:00:00.000Z">2022/07/06</time><div class="mt-1 sm:mt-0 sm:inline sm:before:mx-2 sm:before:content-['|']"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" class="mr-1 inline-block h-6 w-6" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M7.859 6h-2.834a2.025 2.025 0 0 0 -2.025 2.025v2.834c0 .537 .213 1.052 .593 1.432l6.116 6.116a2.025 2.025 0 0 0 2.864 0l2.834 -2.834a2.025 2.025 0 0 0 0 -2.864l-6.117 -6.116a2.025 2.025 0 0 0 -1.431 -.593z"></path><path d="M17.573 18.407l2.834 -2.834a2.025 2.025 0 0 0 0 -2.864l-7.117 -7.116"></path><path d="M6 9h-.01"></path></svg><a class="cactus-link inline-block before:content-['#']" aria-label="View more blogs with the tag 低代码" href="/tags/低代码/">低代码</a></div><p class="mt-8">总有人以为做个拖拉拽就是低代码！没有充足的考虑就开始弄，最后只能得到一个场景有限的玩具。</p></div><div class="prose prose-cactus mt-12 headings:font-semibold prose-th:before:content-none"><h2 id="-序言">🚪 序言</h2>
+<p>在每一个行业细分领域场景，大量的表单、列表展示、落地页、数据看板等开发需求，总是层出不穷。具体需求千变万化，但我们能感受到里面有重复流程，可以被简化，也许可以打造更好的方式去完成它们。</p>
+<p>而低代码的目标，就是提供“低门槛编辑”+“写代码”混合方式，解决那些大体相同、局部发散的需求。</p>
+<p>于是我们会想到，能不能针对垂直领域场景，做一个低代码平台？这样子，就可以更快速地完成需求交付，同时在局部发散的细节也可完成。你可能已经看到了大量的活动搭建平台、表单拖拽拼装平台，甚至还有很多一小时教你制作搭建平台的教程。但是，这些只是解决了“低门槛编辑”这个问题（甚至可能都没解决完全）。</p>
+<p>随着你的垂直领域场景变得复杂，那些简易方案会使得平台难以维护和扩展。这一切都是早就标好价格的。为了不走弯路，去学习和采用成熟的设计方案、开发标准，其实是更好的选择。如果找到了合适的“低代码引擎”，那么你就同时得到了标准和框架实现，为你的低代码平台奠好基。</p>
+<p>我在 2021 年的 TWeb 大会，分享了一个低代码引擎 UICore。由于时间关系，当时只能粗浅地把“页面片”的概念展开细说，其他都是一笔带过。现在试试看能不能写一些文章出来，分享里面大大小小的设计。</p>
+<h2 id="-低代码简化了搭建但不会简化需求">🔭 低代码简化了搭建，但不会简化需求</h2>
+<p>一个完整的页面，需要同时具备布局、数据、逻辑。可惜的是，现在很多低代码方案，没有优雅地完成覆盖。</p>
+<p>就像做软件开发一样，要做一个页面，并持续维护它，我们需要一个标准的流程。它就像下面图中所述的循环：</p>
+<p><img src="/post-images/workflow-framework.png" alt=""></p>
+<p>为了使得这个流程更加可行，我们需要对 <strong>落地</strong> 环节进行设计，同时还要兼顾它的上游：做一个页面的<strong>思考</strong>方式。</p>
+<p>在 UICore 设计里，将<strong>数据和页面</strong>，划分为了<strong>相互独立</strong>、且可以相互关联的两部分，使得这两个环节更加具体可行。</p>
+<p><img src="/post-images/maintain-workflow.png" alt=""></p>
+<p>例如，我们发现数据有问题，甚至是数据协议有问题，我们都可以找到对应的点，并快速地完成改进工作。如果只是页面展示方式有问题，那就直接修改这一个页面，不会影响到其他页面的数据、字段。</p>
+<h2 id="-又一个拖拉拽的轮子">🙄 又一个“拖拉拽”的轮子？</h2>
+<p>现在有很多流行的低代码引擎，比如阿里的 lowcode-engine、百度的 AMIS 等。但是目前而言，绝大多数的交互都是：从左侧拖出东西，放到中间上，然后右侧配置一些看不懂的东西。</p>
+<p>拖拽是没问题的，但是第三步，缺少指引、文档，基本上都是凭感觉配置，然后花费大量时间调试。后续如果页面要修改，那么这里面不清晰的逻辑，就更加难以维护了。</p>
+<p>此外，在可视化编辑区（左侧栏和画布）里面，能不能再结合“数据和逻辑”，自动化一些操作步骤？搭建出来的产物，是否有机制去 Review？是否能够做到多人协同编辑？这些都是有很大的想象空间的。</p>
+<h2 id="️-从领域层面规划出一个引擎">✍️ 从领域层面，规划出一个引擎</h2>
+<p>引擎这东西，最好可以嵌入到任意需要的业务里使用。为了方便嵌入，我们要思考它的职责边界在哪，进而确定它的输入是什么、输入需要符合什么协议，以及别人怎么用上这个引擎。</p>
+<p>对于一个页面引擎，它负责为用户提供**“编辑页面”<strong>和</strong>“让页面运行起来”**的能力。对应就是提供 Designer（搭建器）和 Renderer（渲染器）组件。</p>
+<p><img src="/post-images/uicore-simple-arch.png" alt=""></p>
+<p>上图主要有三个部分：</p>
+<ul>
+<li>
+<p><strong>数据源</strong>：是由外部“挂载”到引擎里面的，对标 MVC、MVVM … 中的 Model。当然，被挂载进来的数据，也可能被页面修改、调用方法。</p>
+</li>
+<li>
+<p><strong>物料</strong>：包括组件库、流程原子、页面插件等。</p>
+</li>
+<li>
+<p><strong>页面描述</strong>：用户搭建了布局和逻辑，然后保存下来的东西。类比我们写的页面代码，丢到浏览器（Renderer）里可以跑起来。</p>
+</li>
+</ul>
+<p>这样的抽取，使得引擎的职责可以聚焦在 “页面搭建 &#x26; 运行”上。同时，在数据的加载和存储上，没有对技术方案作出限制，让业务能更方便发挥和接入。</p>
+<p>对于使用引擎打造平台的人而言，不仅仅是数据源，只要符合协议，就可以在引擎里使用。这为他们保留了很大的发挥空间。</p>
+<h2 id="-模型驱动">💪 模型驱动</h2>
+<p>问一个问题：从零开始做页面时，先有数据协议，还是先有 UI？</p>
+<p>很多低代码平台都重点强调了后者，用户可以无脑地堆积输入框，最后平台根据页面有多少个输入框，自动生成数据协议（字段列表）即可。这种方式门槛非常的低，适用于问卷制作之类的场景，但是在“先有数据协议”的场景下，会变得很麻烦。</p>
+<p>也有低代码平台，选择了前者。用户要制作一个具备动态数据的页面时，需要明确地指定（或者创建）对应的数据字段。这样虽然流程麻烦了点，但是能够保障项目的可维护性。例如：</p>
+<ul>
+<li>
+<p>在与后端交接时，可以有一个清晰的数据协议，并根据数据协议，进行业务建模和逻辑开发；</p>
+</li>
+<li>
+<p>在页面搭建时，可以阻止很多拍脑袋临时新增的字段，避免后面找不到数据源而团队内耗的问题；</p>
+</li>
+<li>
+<p>一个数据模型，即使被用于多个页面和后台服务中，仍然可以统一维护，保持行为一致性……</p>
+</li>
+</ul>
+<p>在低代码领域中，这个问题被称为 <strong>“模型驱动”（先做协议）</strong> 和 <strong>“表单驱动”（UI 即表单）</strong> 之争。具体的讨论可以在网络上找到，总而言之，前者更适合严肃的应用开发。毕竟虽然低代码看起来门槛很低，但是要解决的问题复杂度并不会降低，大家都得严肃对待。</p>
+<p>具体到 UICore 里，我的选择是“模型驱动”。</p>
+<p>虽然会给写代码的人（主要是平台侧和后台人员）带来一点点体力活：声明对应的 methods 和数据结构。但是为了健壮性，这些标准化的流程还是很有必要的。</p>
+<h2 id="-数据源">📦 数据源</h2>
+<p>在 UICore 中，任何 数据 Model 都是 <strong>外部挂载</strong> 进来的。每一个挂载进来的 Model，都需要提供“元信息”和“实例”。</p>
+<ul>
+<li>
+<p><strong>元信息：</strong> 描述数据的“结构”和“提供的方法”。这有点类似 protobuf 可同时描述 message 和 rpc 一样。我们扩展了 JSON Schema 使之能够描述对象提供的 methods 等信息。</p>
+</li>
+<li>
+<p><strong>实例：</strong> 浏览器里的一个“对象”实例，存储着数据内容、状态，并提供了可调用的方法。页面渲染时，UICore 及渲染出来的组件，会从实例里拿数据、调用实例提供的方法。</p>
+</li>
+</ul>
+<p>有了元信息和数据（无论是真实的还是 mock 的），我们可以结合组件库和插件系统，在编辑页面时，为用户自动推导一些按钮、输入框等组件，并提前配置好参数。</p>
+<p><img src="/post-images/uicore-pick-n-get.png" alt=""></p>
+<p>这样的设计，使得 UICore 可以很方便地接入各种数据场景。</p>
+<p>从应用场景的角度出发，CRM、ERP、CMS、研发工具、运维工具……都可以弄出来。这些平台，基本都是 <strong>数据 + 操作接口</strong> + 电子流程 + 页面 这些要素的组合。</p>
+<p>从技术角度，为页面<strong>挂载了数据和接口</strong>，就可以通过搭建、绑定，实现大量的逻辑。只要能给出协议，就可以挂载到页面上使用。挂载数据源的方式很多，你可以通过 props 挂载，也可以通过 UICore 插件挂载。无论是哪种数据源，只要配套提供了协议描述+数据实例，就可以用了。</p>
+<p><img src="/post-images/uicore-pick-n-get-gif.gif" alt=""></p>
+<h2 id="-嵌套--作用域让低代码能解决更多问题">🎎 嵌套 &#x26; 作用域：让低代码能解决更多问题</h2>
+<p>布局嵌套的能力，已经成为了很多搭建平台的标配。</p>
+<p>但是在<strong>嵌套逻辑和数据</strong>上，绝大多数都做的非常粗糙。而这带来的后果，就是难以制作各种列表、表格、卡片墙，无论是布局还是逻辑上都难以制作和维护。</p>
+<p>为解决这个问题，我们需要的是 <strong>“作用域”</strong> 的概念。</p>
+<p>在代码中，我们已经熟练地使用类成员、作用域、闭包等写法，实现了各种复杂嵌套需求。例如一个列表，我们可以使用 v-for 和 Array.map 将数组数据映射为一个复杂的“HTML 片段”，或者写一个组件，用它作为列表项渲染，再把列表项的特殊逻辑和样式都封装到组件里。</p>
+<h3 id="以待办清单页为例">以「待办清单」页为例</h3>
+<p>“制作列表”的需求，在低代码里很常见，但却一直是很多低代码平台头疼的场景。</p>
+<p>如何直接暴露 HTML 片段编写功能，那么操作门槛的变化会让人感到猝不及防；而通过枚举所有展示方式，让用户来选，也不太现实。此外，整个列表的形态也很多，有表格列表、卡片列表等等。</p>
+<p>如果编辑器在 Scope 的能力和交互上做得不足，变量的传递和覆盖关系很不清晰，那么就会极大地提高用户学习成本、心智负担。用户需要用户去理解和使用晦涩的魔法变量来填数据。即使数据填写进去了，也只能在既有的“字段类型”形态下展示，甚至可能只能展示为纯文本，灵活度极低。</p>
+<p><strong>更具体的，以“待办清单”为例</strong></p>
+<video src="/post-images/uicore-todo-example.mp4" controls>
+</video>
+<p>对于整个页面而言，就是“一个用于创建的输入框 + 一个列表”。但是，这种需求描述，并没有说明列表里长什么样子，有什么交互。列表项里除了展示外，也可能存在一些逻辑：</p>
+<ul>
+<li>
+<p>一个按钮，可修改 <code>item.state</code> 的值为 done</p>
+</li>
+<li>
+<p>根据 <code>item.state</code> 决定“未完成”标签是否显示</p>
+</li>
+</ul>
+<p>如果有了作用域，那一切就变得很简单了：每一个<strong>待办事项卡片</strong>，布局和逻辑是一样的，仅数据不一样（数据就是 <code>todo</code> 数组的元素）。于是，我们可以把列表的卡片，变成**“作用域插槽”**</p>
+<p>在 UICore 里，上面的页面，搭建起来很简单。核心操作过程就是：</p>
+<ol>
+<li>
+<p>从 <code>todo</code> 数组，创建一个卡片列表</p>
+</li>
+<li>
+<p>进入任意一张卡片，编辑卡片内布局、逻辑</p>
+</li>
+</ol>
+<h3 id="编辑时交互">编辑时交互</h3>
+<video src="/post-images/uicore-todo-building.mp4" controls>
+</video>
+<p>你可能已经注意到了，点击进入任意空白卡片后，编辑器左侧数据源面板内容会变化。这也就是说，页面搭建者进入了 “卡片列表”的作用域插槽（Scoped Slot），进入了某一个卡片里。</p>
+<p>每一个卡片，因为是作用域，所以可以和最外层页面一样，让用户搭建逻辑和布局。</p>
+<p>既然作用域有自己的逻辑、生命周期，和外面的页面一样，那么，我们也可以创建”局部状态变量”，并将其绑定到任意的组件上。</p>
+<p>上面卡片中，需要使用表达式 <code>item.status === "done"</code> 来标记是否已完成。每次完整写表达式太麻烦了。我们可以在“局部变量”里，创建一个 Computed 变量，就像 Vue 组件开发里的 <strong>计算属性</strong> 一样。</p>
+<p><img src="/post-images/uicore-scope.png" alt=""></p>
+<h3 id="用户要理解作用域是不是很麻烦">用户要理解“作用域”，是不是很麻烦？</h3>
+<p>UICore 在交互上进行了设计和优化。对搭建者而言，点击插槽就行，像拆盒子一样。进入后，左侧的数据源面板会直观地展示插槽数据（比如这里，就是一条待办事项，从 <code>todo</code> 数组取的元素）。接下来，搭建者只需要使用数据源里的内容去组装页面即可。</p>
+<p>对于组件开发者，作用域插槽的能力是开放的。组件开发者可以使用简单的方式，快速地为组件挖一个“可编辑作用域插槽”。插槽内可用的数据、方法等，都<strong>由组件注入</strong>，就像前文所述的“数据源 Model”一样。</p>
+<p><strong>作用域的定义</strong></p>
+<p>总结下来，作用域的特征就是：</p>
+<ul>
+<li>
+<p>布局和逻辑，由用户搭建，是固定的</p>
+</li>
+<li>
+<p>外部可以注入数据 Model，以供布局和逻辑使用</p>
+</li>
+</ul>
+<p>在一个作用域里，用户搭建的逻辑和布局，我们将其存储下来，称为页面片 Pagelet。</p>
+<p>值得一提的是，整个页面也符合作用域的定义。毕竟，页面的数据还是引擎之外注入的。在 UICore 里，整个页面的数据格式同样是 Pagelet。</p>
+<p>由于 数据 Model 都是外部注入到作用域的，所以，Pagelet 里不存储数据，最多只是记录下“数据怎么初始化”之类的信息。但是记住，这不直接等同于实际的数据。</p>
+<h2 id="-扩展能力--想象空间">🧩 扩展能力 &#x26; 想象空间</h2>
+<p>正如前面所述，只要符合协议，就可以用于引擎。这里面想象空间很大。</p>
+<h3 id="以组件库为例">以组件库为例</h3>
+<p>平台侧和专业开发者，会制作大量的组件，小至一个按钮，大至一个地图块。有了这些封装后，页面搭建者才能高效地实现自己的需求。</p>
+<p>在 UICore 中，为组件开发者，提供了许多组件基础能力。组件开发者只需要补充声明，即可为页面搭建者开放配置功能。这些基础能力包括：属性面板、插槽、作用域插槽、数据绑定、事件行为、组件间联动、自定义快捷操作等。</p>
+<p>组件的加载方式，也是可以自由发挥的。对于 UICore 而言，只要你能提供符合协议的描述数据，就可以把组件加载进来。UICore 加载组件的渠道是可以自由发挥的，并且可以动态更新组件。因此，这些功能都是可以实现的：</p>
+<ul>
+<li>
+<p>开发组件时，可通过 🔥HMR（热更新）在真实页面上即时调试，看实际的运行效果。</p>
+</li>
+<li>
+<p>使用不同技术方案（React、Lit、Vue 等）编写组件，经过一层包装转换，即可在 UICore 里使用。</p>
+</li>
+</ul>
+<p>司内的某内部平台，具备上述功能点同时，还做了<strong>组件商城+组件加载器</strong>，提供管理、灰度和锁版等系列操作。而这些能力，UICore 并没有耦合平台。如果你有自己更好的组件库机制，完全可以接入 UICore 上。</p>
+<h3 id="以业务逻辑为例">以业务逻辑为例</h3>
+<p>我们有时还会需要页面曝光上报、页面生命周期钩子等功能，实现很多复杂的需求。对于这些高级能力，可以使用 UICore 插件来实现。虽然实现插件需要了解一些 UICore 内部的实现逻辑，但是一旦平台开发完成，就可以赋能大量的用户。受限于篇幅，这里就不展开讲述了，后续有机会我再多做一些分享。</p>
+<h2 id="-有谁在用呢">👯 有谁在用呢</h2>
+<p><a href="https://wujicode.cn">无极低代码平台</a> 使用的就是 UICore。</p>
+<p>这个平台提供的服务，就是用低代码搭建 B 端站点和内部管理台。搭建者们用它创造了很多的运营工具、开发者工具、看板等等，而且其中大多数都是后台开发人员独立完成的。相比从零弄个系统，无极有效地提高了他们的效率。</p>
+<p>虽然在去年的 TWeb 上亮相了，但是这个引擎目前还只在公司内部开源。后续可能也会在外网和大家见面。里面的技术点，我会先做一些分享，敬请期待。</p></div></article></div><button id="to-top-btn" class="z-90 fixed bottom-8 end-4 flex h-10 w-10 translate-y-28 items-center justify-center rounded-full border-2 border-transparent bg-zinc-200 text-3xl opacity-0 transition-all duration-300 hover:border-zinc-400 data-[show=true]:translate-y-0 data-[show=true]:opacity-100 dark:bg-zinc-700 sm:end-8 sm:h-12 sm:w-12" aria-label="Back to Top" data-show="false"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-6 w-6"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5"></path></svg></button></main><footer class="mt-auto flex w-full flex-col items-center justify-center gap-y-2 pb-4 pt-20 text-center align-top text-gray-500 sm:flex-row sm:justify-between sm:text-xs"><div class="me-0 sm:me-4">
+Copyright &copy; 2024<span class="mx-2" aria-hidden="true">🦾</span>lyonbot</div><nav aria-label="More on this site" class="flex gap-x-2 sm:gap-x-0 sm:divide-x sm:divide-gray-500"><a href="/" class="px-4 py-2 sm:px-2 sm:py-0 sm:hover:text-textColor sm:hover:underline">Home</a><a href="/about/" class="px-4 py-2 sm:px-2 sm:py-0 sm:hover:text-textColor sm:hover:underline">About</a><a href="/post/" class="px-4 py-2 sm:px-2 sm:py-0 sm:hover:text-textColor sm:hover:underline">Blog</a></nav></footer></body></html>
